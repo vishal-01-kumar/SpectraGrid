@@ -31,16 +31,19 @@ Intuitive dashboards for engineers and asset managers
 
 By leveraging machine learning and signal analytics, SpectraGrid reduces reliance on expert judgment and enables predictive, data-driven transformer maintenance.
 
-⚙️ Tech Stack
-Technology	Purpose
-React.js	Frontend UI & Visualization
-Flask (Python)	Backend Microservice for Model Inference
-Python	Signal Processing & AI Modeling
-Scikit-Learn	ML Model Training & Fault Classification
-Pandas / NumPy	Data Cleaning & Feature Engineering
-Plotly / Matplotlib	Interactive FRA Signature Visualization
-Node.js + Express.js	API Gateway Integration
-MongoDB	Storage of Test Records & Predictions
+## ⚙️ Tech Stack
+
+| Technology           | Purpose                                 |
+|----------------------|-----------------------------------------|
+| React.js             | Frontend UI & Visualization             |
+| Flask (Python)       | Backend Microservice for Model Inference|
+| Python               | Signal Processing & AI Modeling         |
+| Scikit-Learn         | ML Model Training & Fault Classification|
+| Pandas / NumPy       | Data Cleaning & Feature Engineering     |
+| Plotly / Matplotlib  | Interactive FRA Signature Visualization |
+| Node.js + Express.js | API Gateway Integration                  |
+| MongoDB              | Storage of Test Records & Predictions   |
+
 💡 Key Features
 
 Multi-Format Data Parsing: Reads and standardizes FRA data from major OEM formats.
