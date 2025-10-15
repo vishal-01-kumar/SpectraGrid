@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SpectraGrid - AI-Powered FRA Diagnostics Platform</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  
+  <!-- Plotly for 3D -->
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="chatbot.css" />
+</head>
+
+<body class="dark-theme">
+  <!-- Neural Network Background -->
+  <div class="neural-bg" id="neuralBg"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="assets/logo.svg" alt="SpectraGrid Logo" class="navbar-logo me-2">
+        <span>SpectraGrid</span>
+        <span class="badge bg-warning text-dark ms-2">XAI</span>
+        <span class="badge bg-info text-dark ms-1">3D</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="badge bg-success-custom">
+          <i class="fas fa-circle pulse-dot me-1"></i>
+          ML Models Active
+        </span>
+        <span class="badge bg-info">
+          <i class="fas fa-brain me-1"></i>
+          Explainable AI
+        </span>
+        <!-- Theme Toggle Button -->
+        <button id="themeToggle" class="btn btn-outline-light btn-sm theme-toggle" title="Toggle Light/Dark Mode">
+          <i id="themeIcon" class="fas fa-sun"></i>
+        </button>
+        <button class="btn btn-outline-light btn-sm" onclick="window.location.reload()">
+          <i class="fas fa-sync-alt me-1"></i> Reset
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Statistics Dashboard -->
+  <div class="stats-bar">
+    <div class="container-fluid px-4">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="stat-card-mini">
+            <div class="stat-icon-mini bg-primary">
+              <i class="fas fa-file-upload"></i>
+            </div>
+            <div class="stat-content-mini">
+              <div class="stat-label-mini">Files Analyzed</div>
+              <div class="stat-value-mini" id="statFiles">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card-mini">
+            <div class="stat-icon-mini bg-danger">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content-mini">
+              <div class="stat-label-mini">Faults Detected</div>
+              <div class="stat-value-mini" id="statFaults">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card-mini">
+            <div class="stat-icon-mini bg-success">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content-mini">
+              <div class="stat-label-mini">Healthy Units</div>
+              <div class="stat-value-mini" id="statHealthy">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card-mini">
+            <div class="stat-icon-mini bg-info">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content-mini">
+              <div class="stat-label-mini">Avg Confidence</div>
+              <div class="stat-value-mini" id="statAvgConf">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container-fluid px-4 py-4">
+    <div class="row g-4">
+      <!-- Left Panel -->
+      <div class="col-xl-4 col-lg-5">
+        <!-- Upload Card -->
+        <div class="panel-card mb-3">
+          <div class="panel-header">
+            <i class="fas fa-cloud-upload-alt text-primary me-2"></i>
+            <span>Upload FRA Files</span>
+          </div>
+          <div class="panel-body">
+            <div id="drop-zone" class="drop-zone-compact">
+              <i class="fas fa-file-upload fa-3x text-primary mb-3"></i>
+              <p class="mb-2"><strong>Drop files here or click to browse</strong></p>
+              <p class="small text-muted">Supported: CSV, XML, BIN (Max 50MB each)</p>
+              <input id="fileInput" type="file" multiple accept=".csv,.xml,.bin,.dat" class="d-none" />
+            </div>
+            <div id="fileInfo" class="file-info mt-3"></div>
+            
+            <!-- Progress Bar -->
+            <div id="uploadProgress" class="upload-progress mt-3">
+              <div class="progress-header mb-2">
+                <span id="progressText" class="small text-muted">Uploading...</span>
+                <span id="progressPercent" class="small fw-bold">0%</span>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analyze Button -->
+        <div class="panel-card mb-3">
+          <div class="panel-body">
+            <div class="d-grid">
+              <button id="parseBtn" class="btn btn-primary btn-lg">
+                <i class="fas fa-cogs me-2"></i> Analyze
+              </button>
+            </div>
+            <div id="loadingIndicator" class="loading-indicator mt-3">
+              <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+              <span class="small">Analyzing with AI models...</span>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Derived Features -->
+        <div class="panel-card mb-3">
+          <div class="panel-header">
+            <i class="fas fa-calculator text-warning me-2"></i>
+            <span>Derived Features</span>
+          </div>
+          <div class="panel-body">
+            <div id="derivedCards" class="derived-grid"></div>
+          </div>
+        </div>
+
+        <!-- XAI: Feature Importance -->
+        <div class="panel-card mb-3">
+          <div class="panel-header">
+            <i class="fas fa-brain text-info me-2"></i>
+            <span>Feature Importance (XAI)</span>
+          </div>
+          <div class="panel-body" style="min-height: 250px;">
+            <canvas id="featureImportanceChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="panel-card mb-3">
+          <div class="panel-body">
+            <div class="d-grid gap-2">
+              <button id="toggle3DBtn" class="btn btn-info btn-sm">
+                <i class="fas fa-cube me-2"></i> Show 3D Plot
+              </button>
+              <button id="exportCSVBtn" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-file-csv me-2"></i> Export CSV
+              </button>
+              <button id="downloadPdfBtn" class="btn btn-success btn-sm">
+                <i class="fas fa-file-pdf me-2"></i> Download Report (PDF)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Log -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <i class="fas fa-terminal text-info me-2"></i>
+            <span>System Log</span>
+          </div>
+          <div class="panel-body p-0">
+            <pre id="parserLog" class="parser-log-compact mb-0"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="col-xl-8 col-lg-7">
+        <!-- 3D Plot Section (Hidden by default) -->
+        <div id="plot3dSection" class="panel-card mb-3" style="display: none;">
+          <div class="panel-header">
+            <i class="fas fa-cube text-cyan me-2"></i>
+            <span>3D FRA Analysis (Frequency × Magnitude × Phase)</span>
+          </div>
+          <div class="panel-body">
+            <!-- File Selection Controls -->
+            <div id="plot3dControls" class="mb-3 p-3" style="background: rgba(0,212,255,0.1); border-radius: 8px; border-left: 4px solid #00d4ff;">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0"><i class="fas fa-sliders-h text-primary me-2"></i>File Selection Controls</h6>
+                <div>
+                  <button id="selectAll3D" class="btn btn-sm btn-outline-primary me-2">Select All</button>
+                  <button id="deselectAll3D" class="btn btn-sm btn-outline-secondary">Deselect All</button>
+                </div>
+              </div>
+              <div id="fileSelectionList" class="row g-2">
+                <div class="col-12 text-muted text-center py-3">
+                  <i class="fas fa-upload me-2"></i>Upload and analyze files to see selection options
+                </div>
+              </div>
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Select which files to display in the 3D plot. You can toggle individual files or use the buttons above.
+                </small>
+              </div>
+            </div>
+            
+            <!-- 3D Plot Container -->
+            <div id="plot3dContainer" style="width: 100%; height: 500px;"></div>
+            <p class="text-sm text-muted mt-2 mb-0">
+              <i class="fas fa-info-circle me-1"></i>
+              Tip: Click and drag to rotate • Scroll to zoom • Double-click to reset view • Use legend to toggle traces
+            </p>
+          </div>
+        </div>
+
+        <!-- FRA Chart Card -->
+        <div class="panel-card mb-3">
+          <div class="panel-header d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-chart-line text-primary me-2"></i>
+              <span>FRA Curve Analysis</span>
+            </div>
+            <div class="confidence-display">
+              <span class="small text-muted me-2">Confidence:</span>
+              <span class="badge bg-primary" id="gaugeLabel">—</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrapper">
+              <canvas id="fraChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Results Grid -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="panel-card result-card-compact">
+              <div class="panel-header">
+                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                <span>Predicted Fault</span>
+              </div>
+              <div class="panel-body">
+                <div class="result-value-large" id="faultType">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="panel-card result-card-compact">
+              <div class="panel-header">
+                <i class="fas fa-shield-alt text-warning me-2"></i>
+                <span>Severity Level</span>
+              </div>
+              <div class="panel-body">
+                <div class="result-value-large" id="severityLabel">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Explanation with XAI -->
+        <div class="panel-card mb-3">
+          <div class="panel-header">
+            <i class="fas fa-lightbulb text-warning me-2"></i>
+            <span>AI Explanation & Recommendations</span>
+          </div>
+          <div class="panel-body">
+            <div id="explainText" class="explanation-text">
+              Upload and analyze an FRA file to see AI-powered insights with explainable AI features.
+            </div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <i class="fas fa-history text-info me-2"></i>
+            <span>Analysis History & Comparison</span>
+          </div>
+          <div class="panel-body">
+            <div id="historyArea" class="history-compact">
+              <p class="text-muted small mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                Upload multiple files to view comparison and historical trends.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <script src="app.js"></script>
+  <script src="chatbot.js"></script>
+</body>
+</html>
